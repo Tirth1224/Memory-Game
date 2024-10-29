@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <link rel="icon" href="./memory.png" type="image/x-icon">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px;
+            padding: 10px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .game-settings {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .game-grid {
+            display: grid;
+            margin-top: 20px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Specific grid configurations for different grid sizes */
+        .game-grid[data-size="2"] {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .game-grid[data-size="3"] {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .game-grid[data-size="4"] {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .game-grid[data-size="5"] {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .game-grid[data-size="6"] {
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+
+        .game-grid .card {
+            background-color: #d3d3d3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            border-radius: 5px;
+            user-select: none;
+            transition: background-color 0.3s, color 0.3s;
+            aspect-ratio: 1;
+            /* Maintains square shape */
+        }
+
+        .game-grid .card.flipped {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        .custom-select {
+            display: inline-block;
+            width: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Memory Game</h2>
+        <div class="game-settings">
+            <label for="gridSize">Grid Size:</label>
+            <select id="gridSize" class="custom-select">
+                <option value="2">2 x 2</option>
+                <option value="3">3 x 3</option>
+                <option value="4" selected>4 x 4</option>
+                <option value="5">5 x 5</option>
+                <option value="6">6 x 6</option>
+            </select>
+        </div>
+        <div id="gameGrid" class="game-grid" data-size="4"></div>
+        <button id="resetButton" class="btn btn-success mt-3">Reset Game</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const gameGrid = document.getElementById("gameGrid");
+            const gridSizeSelector = document.getElementById("gridSize");
+            const resetButton = document.getElementById("resetButton");
+
+            let gridSize = parseInt(gridSizeSelector.value);
+
+            function initializeGame() {
+                gameGrid.innerHTML = "";
+                gameGrid.dataset.size = gridSize; // Set grid size for CSS
+
+                let totalCards = gridSize * gridSize;
+
+                if (totalCards % 2 !== 0) {
+                    totalCards -= 1;
+                }
+
+                let cardValues = [];
+
+                for (let i = 1; i <= totalCards / 2; i++) {
+                    cardValues.push(i);
+                    cardValues.push(i);
+                }
+
+                cardValues = shuffleArray(cardValues);
+
+                for (let i = 0; i < totalCards; i++) {
+                    const card = document.createElement("div");
+                    card.classList.add("card");
+                    card.dataset.value = cardValues[i];
+                    card.addEventListener("click", handleCardClick);
+                    gameGrid.appendChild(card);
+                }
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            let flippedCards = [];
+            let matchedPairs = 0;
+
+            function handleCardClick(event) {
+                const clickedCard = event.target;
+
+                if (clickedCard.classList.contains("flipped") || flippedCards.length === 2)
+                    return;
+
+                clickedCard.classList.add("flipped");
+                clickedCard.innerText = clickedCard.dataset.value;
+                flippedCards.push(clickedCard);
+
+                if (flippedCards.length === 2) {
+                    if (flippedCards[0].dataset.value === flippedCards[1].dataset.value) {
+                        flippedCards = [];
+                        matchedPairs++;
+
+                        if (matchedPairs === (gridSize * gridSize) / 2) {
+                            setTimeout(() => alert("Congratulations! You've won!"), 500);
+                        }
+                    } else {
+                        setTimeout(() => {
+                            flippedCards[0].classList.remove("flipped");
+                            flippedCards[1].classList.remove("flipped");
+                            flippedCards[0].innerText = "";
+                            flippedCards[1].innerText = "";
+                            flippedCards = [];
+                        }, 1000);
+                    }
+                }
+            }
+
+            gridSizeSelector.addEventListener("change", function () {
+                gridSize = parseInt(this.value);
+                matchedPairs = 0;
+                initializeGame();
+            });
+
+            resetButton.addEventListener("click", function () {
+                matchedPairs = 0;
+                initializeGame();
+            });
+
+            initializeGame();
+        });
+    </script>
+</body>
+
+</html>
