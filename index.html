@@ -96,7 +96,13 @@
             width: auto;
         }
 
-        /* Confetti animation */
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 15px;
+        }
+
         .confetti {
             position: absolute;
             top: -10px;
@@ -130,6 +136,10 @@
                 <option value="6">6 x 6</option>
             </select>
         </div>
+        <div class="score-board">
+            <span>Moves: <span id="moveCounter">0</span></span>
+            <span>Time: <span id="timeCounter">0s</span></span>
+        </div>
         <div id="gameGrid" class="game-grid" data-size="4"></div>
         <button id="resetButton" class="btn btn-success mt-3">Reset Game</button>
     </div>
@@ -145,8 +155,29 @@
             const resetButton = document.getElementById("resetButton");
             const winSound = document.getElementById("winSound");
             const clickSound = document.getElementById("clickSound");
+            const moveCounter = document.getElementById("moveCounter");
+            const timeCounter = document.getElementById("timeCounter");
 
             let gridSize = parseInt(gridSizeSelector.value);
+            let moves = 0;
+            let time = 0;
+            let timerInterval;
+
+            function startTimer() {
+                time = 0;
+                timeCounter.textContent = `${time}s`;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    time++;
+                    timeCounter.textContent = `${time}s`;
+                }, 1000);
+            }
+
+            function resetTimer() {
+                clearInterval(timerInterval);
+                time = 0;
+                timeCounter.textContent = `${time}s`;
+            }
 
             function initializeGame() {
                 gameGrid.innerHTML = "";
@@ -159,6 +190,11 @@
                     cardValues.push(i, i);
                 }
                 cardValues = shuffleArray(cardValues);
+
+                moves = 0;
+                moveCounter.textContent = moves;
+                resetTimer();
+                startTimer();
 
                 for (let i = 0; i < totalCards; i++) {
                     const card = document.createElement("div");
@@ -184,10 +220,13 @@
                 const clickedCard = event.target;
                 if (clickedCard.classList.contains("flipped") || flippedCards.length === 2) return;
 
-                clickSound.play(); // Play click sound
+                clickSound.play();
                 clickedCard.classList.add("flipped");
                 clickedCard.innerText = clickedCard.dataset.value;
                 flippedCards.push(clickedCard);
+
+                moves++;
+                moveCounter.textContent = moves;
 
                 if (flippedCards.length === 2) {
                     if (flippedCards[0].dataset.value === flippedCards[1].dataset.value) {
@@ -210,9 +249,10 @@
             }
 
             function celebrateWin() {
-                winSound.play(); // Play win sound
+                winSound.play();
+                clearInterval(timerInterval);
                 for (let i = 0; i < 100; i++) createConfetti();
-                setTimeout(() => alert("Congratulations! You've won!"), 500);
+                setTimeout(() => alert(`Congratulations! You've won in ${moves} moves and ${time}s!`), 500);
             }
 
             function createConfetti() {
